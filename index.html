@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메뉴판</title>
+    <style>
+        :root {
+            --bg-color: #f0f7fc;
+            --main-blue: #a2d2ff;
+            --light-blue: #bde0fe;
+            --deep-blue: #70a1ff;
+            --text-color: #57606f;
+            --white: #ffffff;
+            --gray: #ced6e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(162, 210, 255, 0.3);
+            width: 100%;
+            max-width: 480px;
+            padding: 30px 20px;
+            text-align: center;
+            border: 2px solid var(--light-blue);
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--deep-blue);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #a4b0be;
+            margin-bottom: 30px;
+        }
+
+        /* 룰렛 디스플레이 */
+        .roulette-box {
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            border: 3px dashed var(--main-blue);
+            border-radius: 16px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #menu-display {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--deep-blue);
+            word-break: keep-all;
+            padding: 0 15px;
+            transition: transform 0.1s ease;
+        }
+
+        /* 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .btn {
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 85%;
+        }
+
+        .btn-spin {
+            background-color: var(--main-blue);
+            color: var(--white);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(162, 210, 255, 0.4);
+        }
+
+        .btn-spin:hover {
+            background-color: var(--deep-blue);
+            transform: translateY(-2px);
+        }
+
+        .btn-spin:active {
+            transform: translateY(1px);
+        }
+
+        .btn-spin:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-reset {
+            background: none;
+            color: #a4b0be;
+            font-size: 0.85rem;
+            text-decoration: underline;
+            padding: 5px 10px;
+            width: auto;
+        }
+
+        .btn-reset:hover {
+            color: var(--deep-blue);
+        }
+
+        /* 최근 뽑은 메뉴 기록 */
+        .history {
+            margin-top: 25px;
+            text-align: left;
+            background: #f8fbff;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e1f0ff;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history h3 {
+            font-size: 0.9rem;
+            color: #92a8d1;
+        }
+
+        .history ul {
+            list-style: none;
+            font-size: 0.85rem;
+            color: #747d8c;
+            max-height: 115px;
+            overflow-y: auto;
+        }
+
+        .history li {
+            padding: 6px 0;
+            border-bottom: 1px dashed #f1f2f6;
+        }
+        
+        .history li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>랜덤 메뉴 룰렛</h1>
+    <p class="subtitle">우리 가게는 랜덤 메뉴입니다.</p>
+
+    <div class="roulette-box">
+        <div id="menu-display">? 어떤 메뉴가 나올까요 ?</div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-spin" id="spin-btn" onclick="spinRoulette()">메뉴 주문하기</button>
+    </div>
+
+    <div class="history">
+        <div class="history-header">
+            <h3>최근 주문 내역</h3>
+            <button class="btn btn-reset" id="reset-btn" onclick="resetHistory()">내역 초기화</button>
+        </div>
+        <ul id="history-list">
+            <li>아직 주문한 메뉴가 없습니다.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // 여름 판타지 테마 메뉴 50개 리스트
+    const menuList = [
+        "고래 무덤 위의 하늘 소다", "여명빛 산호초 에이드", "네레아의 푸른 눈물 스무디", 
+        "여름 구름 한 조각 라떼", "인어의 진주 펄 밀크티", "남극 빙하 크러시 모히또", 
+        "물비늘 반짝임 아이스티", "청정 바다정원 에메랄드 주스", "신기루 해변의 소금 크림 밀크", 
+        "여름 별자리 관측 에이드", "돌고래 춤결 블루 스카이", "파도 소리 거품 소다", 
+        "아틀란티스 심해수 크러시", "열대 야자수 잎 그늘 차", "해파리 야광 불빛 에이드",
+        "크라켄의 먹물 블랙 보드카", "한여름 밤의 유성우 칵테일", "얼어붙은 세이렌의 속삭임", 
+        "심해 2000m의 블루 라군", "망각의 해변 모래시계 칵테일", "새벽녘 이슬 맺힌 럼", 
+        "폭풍우 치는 바다의 다크앤스톰", "진주조개 속 달빛 샴페인", "해적선의 비밀 보물 상자 주", 
+        "말리부 해안의 선셋 슬링", "피오르드의 빙하수 진토닉", "환상산호 섬의 무지개 칵테일", 
+        "요정의 바다 안개 미스트 하이볼", "유령선에서 흘러나온 럼주", "파란달의 잔영 마르가리타",
+        "조개껍질 속 민트초코 무스", "빙하 조각 레몬 샤베트", "돌고래 꼬리 바닐라 젤라또", 
+        "파스텔 산호 파르페", "해변의 모래성 인절미 티라미수", "소금별을 가둔 블루 젤리 푸딩", 
+        "여름 구름 솜사탕 타르트", "바다 마녀의 저주 인어공주 케이크", "은하수 얼음 조각 화채", 
+        "산들바람 청포도 판나코타", "파도 문양 마카롱 플래터", "자수정 동굴의 자두 크럼블", 
+        "인어 미스틱 블루 빙수", "밀물과 썰물의 슈가 파운드 케이크", "여름새 깃털 코코넛 머랭",
+        "별불가사리 치즈 크래커", "심해의 발광 버섯 카나페", "산호초 닮은 바삭 감자튀김", 
+        "해풍에 말린 요정의 과일 칩", "바다 요새의 버터 갈릭 슈림프"
+    ];
+
+    const menuDisplay = document.getElementById('menu-display');
+    const spinBtn = document.getElementById('spin-btn');
+    const historyList = document.getElementById('history-list');
+    let historyArr = [];
+
+    // 가상 오디오 시스템 (Web Audio API)
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // 룰렛 돌아갈 때 '따닥' 하는 효과음
+    function playTickSound() {
+        initAudio();
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+        
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    // 최종 선정되었을 때 '딩동댕~✨' 하는 청량한 효과음
+    function playSuccessSound() {
+        initAudio();
+        if (!audioCtx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // 도-미-솔-도 (C코드 트라이어드)
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.08);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime + index * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.08 + 0.4);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + index * 0.08);
+            osc.stop(audioCtx.currentTime + index * 0.08 + 0.4);
+        });
+    }
+
+    // 룰렛 구동 함수
+    function spinRoulette() {
+        spinBtn.disabled = true;
+        let counter = 0;
+        const duration = 22; // 총 교차 횟수
+        
+        const interval = setInterval(() => {
+            const randomIndex = Math.floor(Math.random() * menuList.length);
+            menuDisplay.innerText = menuList[randomIndex];
+            
+            // 통통 튀는 애니메이션 및 드르륵 효과음
+            menuDisplay.style.transform = `scale(${0.95 + Math.random() * 0.1})`;
+            playTickSound();
+            
+            counter++;
+            
+            if (counter >= duration) {
+                clearInterval(interval);
+                
+                // 최종 메뉴 확정
+                const finalIndex = Math.floor(Math.random() * menuList.length);
+                const finalMenu = menuList[finalIndex];
+                
+                menuDisplay.innerText = `✨ ${finalMenu} ✨`;
+                menuDisplay.style.transform = "scale(1.1)";
+                spinBtn.disabled = false;
+                
+                // 성공 효과음 재생 및 기록 업데이트
+                playSuccessSound();
+                updateHistory(finalMenu);
+            }
+        }, 75);
+    }
+
+    // 주문 내역 업데이트
+    function updateHistory(menu) {
+        if (historyArr.length === 0) {
+            historyList.innerHTML = '';
+        }
+        
+        historyArr.unshift(menu);
+        if (historyArr.length > 5) {
+            historyArr.pop(); 
+        }
+        
+        historyList.innerHTML = historyArr
+            .map(item => `<li>• ${item}</li>`)
+            .join('');
+    }
+
+    // 추가된 초기화 기능
+    function resetHistory() {
+        if (historyArr.length === 0) return;
+        
+        if (confirm("최근 주문 내역을 모두 삭제할까요?")) {
+            historyArr = [];
+            historyList.innerHTML = '<li>아직 주문한 메뉴가 없습니다.</li>';
+            menuDisplay.innerText = '? 어떤 메뉴가 나올까요 ?';
+            menuDisplay.style.transform = "scale(1)";
+        }
+    }
+</script>
+
+</body>
+</html>
